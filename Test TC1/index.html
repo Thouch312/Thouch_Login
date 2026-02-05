@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - ระบบรายชื่อนักเรียนนักศึกษา</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .login-card-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .login-card-container.wide {
+            max-width: 950px;
+        }
+
+        /* Float animation for the whole container */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .login-card-container {
+            animation: float 6s ease-in-out infinite;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animated w-100 d-flex align-items-center justify-content-center">
+        <div class="login-card-container">
+            <!-- Login Card -->
+            <div class="auth-card-glass" id="loginCard">
+                <div class="auth-header">
+                    <div class="auth-icon">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">ยินดีต้อนรับ</h3>
+                    <p class="text-muted mb-4">ระบบจัดการข้อมูลนักเรียน</p>
+                </div>
+                <form id="loginForm">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="username" placeholder="Username" required>
+                        <label for="username">ชื่อผู้ใช้งาน (Username)</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="password" placeholder="Password" required>
+                        <label for="password">รหัสผ่าน (Password)</label>
+                    </div>
+                    <div class="d-grid gap-3 mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">เข้าสู่ระบบ</button>
+                        <div class="auth-footer text-center">
+                            <div class="mb-3">
+                                <span class="text-white opacity-75 small">ยังไม่มีบัญชี?</span>
+                                <a href="#" class="text-decoration-none fw-bold ms-1"
+                                    style="color: var(--accent-primary); cursor: pointer;"
+                                    onclick="toggleCard('register')">
+                                    สมัครสมาชิกนักศึกษา
+                                </a>
+                            </div>
+                            <div class="pt-2 border-top border-white border-opacity-10">
+                                <a href="#" class="text-decoration-none small text-white fw-bold hover-opacity"
+                                    onclick="toggleCard('forgot')">
+                                    <i class="bi bi-question-circle me-1"></i> ลืมรหัสผ่าน?
+                                </a>
+                                <span class="mx-2 text-white opacity-50">|</span>
+                                <a href="#" class="text-decoration-none small text-white fw-bold hover-opacity"
+                                    onclick="toggleCard('admin')">
+                                    <i class="bi bi-person-badge me-1"></i> สำหรับเจ้าหน้าที่
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+
+            <!-- Forgot Password Card -->
+            <div class="auth-card-glass" id="forgotPasswordCard" style="display: none;">
+                <div class="auth-header">
+                    <div class="auth-icon bg-danger">
+                        <i class="bi bi-key-fill"></i>
+                    </div>
+                    <h3 class="fw-bold text-danger">ลืมรหัสผ่าน</h3>
+                    <p class="text-muted">รีเซ็ตรหัสผ่านใหม่ของคุณ</p>
+                </div>
+                <form id="forgotPasswordForm">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="forgotUsername" placeholder="Username" required>
+                        <label for="forgotUsername">ชื่อผู้ใช้งาน หรือ ชื่อ-นามสกุล</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="forgotNewPassword" placeholder="New Password"
+                            required>
+                        <label for="forgotNewPassword">รหัสผ่านใหม่</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="forgotConfirmPassword"
+                            placeholder="Confirm Password" required>
+                        <label for="forgotConfirmPassword">ยืนยันรหัสผ่านใหม่</label>
+                    </div>
+                    <div class="auth-footer d-grid gap-3">
+                        <button type="submit" class="btn btn-danger btn-lg shadow-sm">รีเซ็ตรหัสผ่าน</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="toggleCard('login')">
+                            <i class="bi bi-arrow-left"></i> กลับไปหน้าเข้าสู่ระบบ
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+
+            <!-- Admin Register Card -->
+            <div class="auth-card-glass" id="adminRegisterCard" style="display: none;">
+                <div class="auth-header">
+                    <div class="auth-icon bg-warning">
+                        <i class="bi bi-person-fill-gear"></i>
+                    </div>
+                    <h3 class="fw-bold text-warning">สมัครเจ้าหน้าที่</h3>
+                    <p class="text-muted">สำหรับผู้ดูแลระบบ</p>
+                </div>
+                <form id="adminRegisterForm">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="regAdminName" placeholder="Name" required>
+                        <label for="regAdminName">ชื่อ-นามสกุล</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="regAdminUsername" placeholder="Username" required>
+                        <label for="regAdminUsername">ชื่อผู้ใช้งาน (Username)</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="regAdminPassword" placeholder="Password"
+                            required>
+                        <label for="regAdminPassword">รหัสผ่าน</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="tel" class="form-control" id="regAdminPhone" placeholder="Phone" required>
+                        <label for="regAdminPhone">เบอร์โทรศัพท์ (Phone Number)</label>
+                    </div>
+                    <div class="auth-footer d-grid gap-3">
+                        <button type="submit" class="btn btn-warning btn-lg text-white">ลงทะเบียนเจ้าหน้าที่</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="toggleCard('login')">
+                            <i class="bi bi-arrow-left"></i> กลับไปหน้าเข้าสู่ระบบ
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Register Card -->
+            <div class="auth-card-glass" id="registerCard" style="display: none;">
+                <div class="auth-header">
+                    <div class="auth-icon bg-success">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <h3 class="fw-bold text-success">สมัครสมาชิก</h3>
+                    <p class="text-muted">สำหรับนักศึกษาใหม่</p>
+                </div>
+                <form id="registerForm">
+                    <div class="row g-3">
+                        <!-- Section: ข้อมูลส่วนตัวและวิชาการ -->
+                        <div class="col-12">
+                            <h6 class="text-info border-bottom border-white border-opacity-10 pb-2 mb-3">
+                                <i class="bi bi-person-vcard-fill me-2"></i>ข้อมูลส่วนตัวและวิชาการ
+                            </h6>
+                        </div>
+                        <!-- Row 1: ID, Name, Faculty -->
+                        <div class="col-md-3">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="regId" placeholder="ID" required>
+                                <label for="regId">รหัสนักศึกษา</label>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="regName" placeholder="Name" required>
+                                <label for="regName">ชื่อ-นามสกุล</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                <select class="form-select" id="regFaculty" required>
+                                    <option value="" selected disabled>เลือกแผนก</option>
+                                    <option value="เทคโนโลยีคอมพิวเตอร์">เทคโนโลยีคอมพิวเตอร์</option>
+                                    <option value="อิเล็กทรอนิกส์">อิเล็กทรอนิกส์</option>
+                                    <option value="ไฟฟ้ากำลัง">ไฟฟ้ากำลัง</option>
+                                    <option value="ก่อสร้าง">ก่อสร้าง</option>
+                                    <option value="ช่างยนต์">ช่างยนต์</option>
+                                    <option value="บัญชี">บัญชี</option>
+                                    <option value="การตลาด">การตลาด</option>
+                                    <option value="IT">IT</option>
+                                    <option value="อื่นๆ">อื่นๆ</option>
+                                </select>
+                                <label for="regFaculty">แผนก</label>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Department, Room, Phone -->
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="regDepartment" placeholder="Department"
+                                    required>
+                                <label for="regDepartment">สาขาวิชา</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="regRoom" placeholder="Room" required>
+                                <label for="regRoom">กลุ่ม</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                <input type="tel" class="form-control" id="regPhone" placeholder="Phone" required>
+                                <label for="regPhone">เบอร์โทรศัพท์</label>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Gender, Age, Year, Blood -->
+                        <div class="col-md-3">
+                            <div class="form-floating">
+                                <select class="form-select" id="regGender" required>
+                                    <option value="ชาย">ชาย</option>
+                                    <option value="หญิง">หญิง</option>
+                                    <option value="อื่นๆ">อื่นๆ</option>
+                                </select>
+                                <label for="regGender">เพศ</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-floating">
+                                <input type="number" class="form-control" id="regAge" placeholder="Age" min="1"
+                                    max="100" required>
+                                <label for="regAge">อายุ</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-floating">
+                                <input type="date" class="form-control" id="regBirthday" required>
+                                <label for="regBirthday">วัน/เดือน/ปีเกิด</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-floating">
+                                <select class="form-select" id="regBloodGroup" required>
+                                    <option value="" selected disabled>...</option>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="AB">AB</option>
+                                    <option value="O">O</option>
+                                </select>
+                                <label for="regBloodGroup">กรุ๊ปเลือด</label>
+                            </div>
+                        </div>
+
+                        <!-- Row 4: National ID -->
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="regNationalId" placeholder="ID Card"
+                                    maxlength="13" required>
+                                <label for="regNationalId">เลขประจำตัวประชาชน</label>
+                            </div>
+                        </div>
+
+                        <!-- Section: ข้อมูลติดต่อผู้ปกครอง -->
+                        <div class="col-12 mt-4">
+                            <h6 class="text-warning border-bottom border-white border-opacity-10 pb-2 mb-3">
+                                <i class="bi bi-people-fill me-2"></i>ข้อมูลติดต่อผู้ปกครอง
+                            </h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="regFatherName" placeholder="Father Name"
+                                    required>
+                                <label for="regFatherName">ชื่อบิดา</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="tel" class="form-control" id="regFatherPhone" placeholder="Father Phone"
+                                    required>
+                                <label for="regFatherPhone">เบอร์โทรศัพท์บิดา</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="regMotherName" placeholder="Mother Name"
+                                    required>
+                                <label for="regMotherName">ชื่อมารดา</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="tel" class="form-control" id="regMotherPhone" placeholder="Mother Phone"
+                                    required>
+                                <label for="regMotherPhone">เบอร์โทรศัพท์มารดา</label>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="auth-footer d-grid gap-3 mt-4">
+                        <button type="submit" class="btn btn-success btn-lg">ลงทะเบียนนักศึกษา</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="toggleCard('login')">
+                            <i class="bi bi-arrow-left"></i> กลับไปหน้าเข้าสู่ระบบ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Custom JS -->
+        <script src="script.js"></script>
+        <script>
+            // Toggle between Login and Register cards
+            // Toggle between Login and Register cards
+            function toggleCard(mode) {
+                const container = document.querySelector('.login-card-container');
+                const loginCard = document.getElementById('loginCard');
+                const registerCard = document.getElementById('registerCard');
+                const adminRegisterCard = document.getElementById('adminRegisterCard');
+                const forgotCard = document.getElementById('forgotPasswordCard');
+
+                // Hide all first
+                loginCard.style.display = 'none';
+                registerCard.style.display = 'none';
+                adminRegisterCard.style.display = 'none';
+                forgotCard.style.display = 'none';
+                container.classList.remove('wide');
+
+                if (mode === 'register') {
+                    // Switch to Student Register
+                    registerCard.style.display = 'block';
+                    container.classList.add('wide');
+                } else if (mode === 'admin') {
+                    // Switch to Admin Register
+                    adminRegisterCard.style.display = 'block';
+                    // Admin card is normal width
+                } else if (mode === 'forgot') {
+                    // Switch to Forgot Password
+                    forgotCard.style.display = 'block';
+                } else {
+                    // Switch to Login (Default)
+                    loginCard.style.display = 'block';
+                    document.getElementById('registerForm').reset();
+                    document.getElementById('adminRegisterForm').reset();
+                    if (document.getElementById('forgotPasswordForm')) {
+                        document.getElementById('forgotPasswordForm').reset();
+                    }
+                }
+            }
+
+            document.getElementById('loginForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                // เรียกใช้ฟังก์ชัน handleLogin จาก script.js
+                if (handleLogin(username, password)) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง');
+                }
+            });
+
+            document.getElementById('registerForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const id = document.getElementById('regId').value;
+                const name = document.getElementById('regName').value;
+                const faculty = document.getElementById('regFaculty').value;
+                const gender = document.getElementById('regGender').value;
+                const age = document.getElementById('regAge').value;
+                const birthday = document.getElementById('regBirthday').value;
+                const department = document.getElementById('regDepartment').value;
+                const room = document.getElementById('regRoom').value;
+                const bloodGroup = document.getElementById('regBloodGroup').value;
+                const phone = document.getElementById('regPhone').value;
+                const nationalId = document.getElementById('regNationalId').value;
+                const fatherName = document.getElementById('regFatherName').value;
+                const fatherPhone = document.getElementById('regFatherPhone').value;
+                const motherName = document.getElementById('regMotherName').value;
+                const motherPhone = document.getElementById('regMotherPhone').value;
+
+                const newStudent = {
+                    id: id,
+                    name: name,
+                    faculty: faculty,
+                    gpa: "0.00",
+                    gender: gender,
+                    age: age,
+                    birthday: birthday,
+                    department: department,
+                    room: room,
+                    bloodGroup: bloodGroup,
+                    phone: phone,
+                    nationalId: nationalId,
+                    fatherName: fatherName,
+                    fatherPhone: fatherPhone,
+                    motherName: motherName,
+                    motherPhone: motherPhone
+                };
+
+                const result = handleRegister(newStudent);
+                if (result.success) {
+                    alert('ลงทะเบียนสำเร็จ! กรุณาเข้าสู่ระบบด้วยชื่อและรหัสนักศึกษาของคุณ');
+                    toggleCard(); // Switch back to login
+                } else {
+                    alert('ลงทะเบียนไม่สำเร็จ: ' + result.message);
+                }
+            });
+
+            document.getElementById('adminRegisterForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const name = document.getElementById('regAdminName').value;
+                const username = document.getElementById('regAdminUsername').value;
+                const password = document.getElementById('regAdminPassword').value;
+                const phone = document.getElementById('regAdminPhone').value;
+
+                const newAdmin = {
+                    name: name,
+                    username: username,
+                    password: password,
+                    phone: phone
+                };
+
+                const result = handleRegisterAdmin(newAdmin);
+                if (result.success) {
+                    alert('ลงทะเบียนเจ้าหน้าที่สำเร็จ! กรุณาเข้าสู่ระบบ');
+                    toggleCard('login');
+                } else {
+                    alert('ลงทะเบียนไม่สำเร็จ: ' + result.message);
+                }
+            });
+
+            document.getElementById('forgotPasswordForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                const identifier = document.getElementById('forgotUsername').value;
+                const newPassword = document.getElementById('forgotNewPassword').value;
+                const confirmPassword = document.getElementById('forgotConfirmPassword').value;
+
+                if (newPassword !== confirmPassword) {
+                    alert('รหัสผ่านไม่ตรงกัน');
+                    return;
+                }
+
+                const result = handleForgotPassword(identifier, newPassword);
+                if (result.success) {
+                    alert('รีเซ็ตรหัสผ่านสำเร็จ!');
+                    toggleCard('login');
+                } else {
+                    alert('รีเซ็ตไม่สำเร็จ: ' + result.message);
+                }
+            });
+        </script>
+</body>
+
+</html>

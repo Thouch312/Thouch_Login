@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบรายชื่อนักเรียนนักศึกษา</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <!-- =========================================
+         ส่วนที่ 1: Navbar (เมนูนำทาง)
+         ========================================= -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="bi bi-mortarboard-fill me-2"></i>ระบบจัดการนักศึกษา
+            </a>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-warning btn-sm me-2 position-relative" id="adminInboxBtn"
+                    style="display: none;" data-bs-toggle="modal" data-bs-target="#adminApprovalModal"
+                    title="คำขอสมัครเจ้าหน้าที่">
+                    <i class="bi bi-envelope-fill"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                        id="adminInboxBadge" style="display: none;">
+                        0
+                    </span>
+                </button>
+                <button class="btn btn-outline-info btn-sm me-2" id="manageAdminsBtn" style="display: none;"
+                    data-bs-toggle="modal" data-bs-target="#adminManagementModal" title="จัดการข้อมูลเจ้าหน้าที่">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </button>
+                <span class="text-white me-3" id="userDisplay">ยินดีต้อนรับ</span>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">ออกจากระบบ</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- =========================================
+         ส่วนที่ 2: Main Container (เนื้อหาหลัก)
+         ========================================= -->
+    <div class="container py-5">
+
+        <!-- Header Section -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 gap-4 fade-in">
+            <div>
+                <h1 class="display-4 fw-bold mb-1"
+                    style="background: var(--primary-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                    รายชื่อนักเรียนนักศึกษา
+                </h1>
+            </div>
+            <!-- ปุ่มเปิด Modal -->
+            <div class="d-flex gap-3">
+                <button type="button" class="btn btn-outline-info shadow-sm px-4" onclick="showFacultyStats()">
+                    <i class="bi bi-pie-chart-fill me-2"></i>สถิติสาขาวิชา
+                </button>
+                <button type="button" class="btn btn-primary shadow-sm px-4" data-bs-toggle="modal"
+                    data-bs-target="#addStudentModal">
+                    <i class="bi bi-plus-lg me-2"></i>เพิ่มข้อมูลใหม่
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards Row -->
+        <div class="row g-4 mb-5 fade-in">
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card primary" onclick="clearAllFilters()" style="cursor: pointer;">
+                    <div class="text-xs text-primary mb-2">จำนวนนักเรียนทั้งหมด</div>
+                    <div class="h2 fw-bold mb-0" id="statTotal">...</div>
+                    <i class="bi bi-people-fill text-primary"></i>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card success">
+                    <div class="text-xs text-success mb-2">เกรดเฉลี่ยรวม (AVG GPA)</div>
+                    <div class="h2 fw-bold mb-0" id="statGpa">...</div>
+                    <i class="bi bi-bar-chart-fill text-success"></i>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card info" onclick="filterByGender('ชาย')" style="cursor: pointer;">
+                    <div class="text-xs text-info mb-2">นักเรียนชาย</div>
+                    <div class="h2 fw-bold mb-0" id="statMale">...</div>
+                    <i class="bi bi-gender-male text-info"></i>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card warning" onclick="filterByGender('หญิง')" style="cursor: pointer;">
+                    <div class="text-xs text-warning mb-2">นักเรียนหญิง</div>
+                    <div class="h2 fw-bold mb-0" id="statFemale">...</div>
+                    <i class="bi bi-gender-female text-warning"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="row mb-5 fade-in">
+            <div class="col-12 col-md-8 col-lg-6 mx-auto">
+                <div class="input-group shadow-sm"
+                    style="border-radius: 50px; overflow: hidden; border: 1px solid var(--border-glass);">
+                    <span class="input-group-text bg-transparent border-0 ps-4">
+                        <i class="bi bi-search text-primary"></i>
+                    </span>
+                    <input type="text" id="searchInput" class="form-control border-0 py-3"
+                        placeholder="ค้นหารายชื่อนักศึกษา (ชื่อ หรือ รหัส)...">
+                </div>
+            </div>
+            <div id="activeFilterStatus" class="col-12 mt-3 text-center"
+                style="display: none; color: var(--accent-primary); font-weight: 500;">
+                <!-- Filter status will be injected here -->
+            </div>
+        </div>
+
+        <div class="card-table-wrap fade-in">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th class="text-center">รูปภาพ</th>
+                            <th>รหัสนักศึกษา</th>
+                            <th>ชื่อ-นามสกุล</th>
+                            <th>แผนก / สาขา</th>
+                            <th>GPA</th>
+                            <th class="text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                        <!-- ข้อมูลนักเรียนจะถูกเพิ่มที่นี่ด้วย JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- แสดงเมื่อไม่มีข้อมูล -->
+            <div id="noDataMessage" class="text-center py-5 text-muted">
+                <i class="bi bi-folder-x display-1 opacity-25 mb-3"></i>
+                <p class="mb-0">ยังไม่มีข้อมูลนักเรียนในระบบ</p>
+                <p class="small opacity-75">กรุณากดปุ่ม <strong>"+ เพิ่มข้อมูลใหม่"</strong> เพื่อเริ่มต้น</p>
+            </div>
+        </div>
+
+        <!-- =========================================
+         ส่วนที่ 4: Modal (หน้าต่างป๊อปอัพเพิ่มข้อมูล)
+         ========================================= -->
+        <div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="addStudentModalLabel">
+                            <i class="bi bi-person-plus-fill me-2"></i>เพิ่มข้อมูลนักเรียนใหม่
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <form id="studentForm">
+                            <!-- Section: Personal Info -->
+                            <div class="form-section-card mb-4">
+                                <div class="d-flex align-items-center mb-4">
+                                    <div class="section-icon bg-primary bg-opacity-20 text-primary">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold text-white">ข้อมูลส่วนตัว</h6>
+                                        <small class="text-muted">กรอกรหัส ชื่อ และข้อมูลพื้นฐาน</small>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="text" class="form-control" id="studentId" placeholder="ID"
+                                                required>
+                                            <label for="studentId">รหัสนักศึกษา</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="text" class="form-control" id="studentName" placeholder="Name"
+                                                required>
+                                            <label for="studentName">ชื่อ-นามสกุล</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-floating custom-form-floating">
+                                            <select class="form-select" id="studentGender" required>
+                                                <option value="" selected disabled>เลือกเพศ</option>
+                                                <option value="ชาย">ชาย</option>
+                                                <option value="หญิง">หญิง</option>
+                                                <option value="อื่นๆ">อื่นๆ</option>
+                                            </select>
+                                            <label for="studentGender">เพศ</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="tel" class="form-control" id="studentPhone"
+                                                placeholder="0xx-xxx-xxxx" required>
+                                            <label for="studentPhone">เบอร์โทรศัพท์</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="text" class="form-control" id="studentNationalId"
+                                                maxlength="13" placeholder="เลข 13 หลัก" required>
+                                            <label for="studentNationalId">เลขประจำตัวประชาชน</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="number" class="form-control" id="studentAge" placeholder="Age"
+                                                min="1" max="100" required>
+                                            <label for="studentAge">อายุ</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="date" class="form-control" id="studentBirthday" required>
+                                            <label for="studentBirthday">วัน/เดือน/ปีเกิด</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating custom-form-floating">
+                                            <select class="form-select" id="studentBloodGroup" required>
+                                                <option value="" selected disabled>...</option>
+                                                <option value="A">A</option>
+                                                <option value="B">B</option>
+                                                <option value="AB">AB</option>
+                                                <option value="O">O</option>
+                                            </select>
+                                            <label for="studentBloodGroup">กลุ่มเลือด</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Academic Info -->
+                            <div class="form-section-card mb-4">
+                                <div class="d-flex align-items-center mb-4">
+                                    <div class="section-icon bg-success bg-opacity-20 text-success">
+                                        <i class="bi bi-mortarboard-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold text-white">ข้อมูลการศึกษา</h6>
+                                        <small class="text-muted">รายละเอียดสาขาวิชาและผลการเรียน</small>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating custom-form-floating">
+                                            <select class="form-select" id="studentFaculty" required>
+                                                <option value="" selected disabled>เลือกแผนก</option>
+                                                <option value="เทคโนโลยีคอมพิวเตอร์">เทคโนโลยีคอมพิวเตอร์</option>
+                                                <option value="อิเล็กทรอนิกส์">อิเล็กทรอนิกส์</option>
+                                                <option value="ไฟฟ้ากำลัง">ไฟฟ้ากำลัง</option>
+                                                <option value="ก่อสร้าง">ก่อสร้าง</option>
+                                                <option value="ช่างยนต์">ช่างยนต์</option>
+                                                <option value="IT">IT</option>
+                                                <option value="อื่นๆ">อื่นๆ</option>
+                                            </select>
+                                            <label for="studentFaculty">แผนก</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="text" class="form-control" id="studentDepartment"
+                                                placeholder="Department" required>
+                                            <label for="studentDepartment">สาขาวิชา</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="text" class="form-control" id="studentRoom" placeholder="Room"
+                                                required>
+                                            <label for="studentRoom">กลุ่ม</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="number" class="form-control" id="studentGpa" step="0.01"
+                                                min="0" max="4.00" placeholder="GPA" required>
+                                            <label for="studentGpa">เกรดเฉลี่ย (GPA)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Parent Info -->
+                            <div class="form-section-card mb-4">
+                                <div class="d-flex align-items-center mb-4">
+                                    <div class="section-icon bg-info bg-opacity-20 text-info">
+                                        <i class="bi bi-people-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold text-white">ข้อมูลผู้ปกครอง</h6>
+                                        <small class="text-muted">ข้อมูลการติดต่อบิดาและมารดา</small>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="text" class="form-control" id="studentFatherName"
+                                                placeholder="Father" required>
+                                            <label for="studentFatherName">ชื่อบิดา</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="tel" class="form-control" id="studentFatherPhone"
+                                                placeholder="Phone" required>
+                                            <label for="studentFatherPhone">เบอร์โทรศัพท์บิดา</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="text" class="form-control" id="studentMotherName"
+                                                placeholder="Mother" required>
+                                            <label for="studentMotherName">ชื่อมารดา</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating custom-form-floating">
+                                            <input type="tel" class="form-control" id="studentMotherPhone"
+                                                placeholder="Phone" required>
+                                            <label for="studentMotherPhone">เบอร์โทรศัพท์มารดา</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section-card mb-4 border-dashed">
+                                <label for="studentPhoto" class="form-label text-white small ms-1 mb-2">
+                                    <i class="bi bi-image me-1"></i> อัปโหลดรูปถ่ายนักศึกษา
+                                </label>
+                                <input type="file" class="form-control custom-file-input" id="studentPhoto"
+                                    accept="image/*">
+                            </div>
+
+                            <div class="d-flex flex-column flex-md-row gap-3 mt-4">
+                                <button type="submit" class="btn btn-primary flex-grow-1 py-3" id="submitStudentBtn">
+                                    <i class="bi bi-check-circle me-2"></i>บันทึกข้อมูลนักศึกษา
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary px-5"
+                                    data-bs-dismiss="modal">ยกเลิก</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================
+         ส่วนที่ 5: Modal (หน้าต่างป๊อปอัพดูข้อมูล)
+         ========================================= -->
+        <div class="modal fade" id="viewStudentModal" tabindex="-1" aria-labelledby="viewStudentModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content overflow-visible">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="viewStudentModalLabel">
+                            <i class="bi bi-search me-2"></i>รายละเอียดนักศึกษา
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <!-- Profile Header -->
+                        <div class="text-center mb-4">
+                            <div class="position-relative d-inline-block">
+                                <div class="avatar-view-container mb-3 mx-auto">
+                                    <i class="bi bi-person-fill" id="viewStudentDefaultIcon"></i>
+                                    <img id="viewStudentImage" src="" alt="Student Photo">
+                                </div>
+                                <span class="status-badge-online"></span>
+                            </div>
+                            <h3 class="fw-bold mb-1 text-white" id="viewStudentName"></h3>
+                            <div class="badge bg-primary bg-opacity-10 text-primary-light px-3 py-2 rounded-pill">
+                                <i class="bi bi-person-badge me-2"></i>รหัส: <span id="viewStudentId"
+                                    class="fw-bold"></span>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- Section: Personal Info -->
+                            <div class="col-12">
+                                <div class="view-info-card">
+                                    <h6 class="view-section-title text-info-light">
+                                        <i class="bi bi-person-vcard me-2"></i>ข้อมูลส่วนตัว
+                                    </h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="view-label">เลขประจำตัวประชาชน</div>
+                                            <div class="view-value" id="viewStudentNationalId"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="view-label">เพศ</div>
+                                            <div class="view-value" id="viewStudentGender"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="view-label">อายุ</div>
+                                            <div class="view-value"><span id="viewStudentAge"></span> ปี</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="view-label">วัน/เดือน/ปีเกิด</div>
+                                            <div class="view-value" id="viewStudentBirthday"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="view-label">กลุ่มเลือด</div>
+                                            <div class="view-value">
+                                                <span id="viewStudentBloodGroup" class="badge bg-danger"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="view-label">เบอร์โทรศัพท์นักศึกษา</div>
+                                            <div class="view-value text-accent" id="viewStudentPhone"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Contact -->
+                            <div class="col-12">
+                                <div class="view-info-card">
+                                    <h6 class="view-section-title text-warning-light">
+                                        <i class="bi bi-people-fill me-2"></i>ข้อมูลผู้ปกครอง
+                                    </h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="view-label">บิดา</div>
+                                            <div class="view-value" id="viewStudentFatherName"></div>
+                                            <div class="view-sub-value text-info-light">
+                                                เบอร์โทร: <span id="viewStudentFatherPhone"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="view-label">มารดา</div>
+                                            <div class="view-value" id="viewStudentMotherName"></div>
+                                            <div class="view-sub-value text-info-light">
+                                                เบอร์โทร: <span id="viewStudentMotherPhone"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Academic -->
+                            <div class="col-12">
+                                <div class="view-info-card">
+                                    <h6 class="view-section-title text-success-light">
+                                        <i class="bi bi-mortarboard me-2"></i>ข้อมูลการศึกษา
+                                    </h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-7">
+                                            <div class="view-label">แผนก</div>
+                                            <div class="view-value" id="viewStudentFaculty"></div>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="view-label">GPA</div>
+                                            <div class="view-value h4 mb-0 text-success-light fw-bold"
+                                                id="viewStudentGpa"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="view-label">สาขาวิชา</div>
+                                            <div class="view-value" id="viewStudentDepartment"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="view-label">กลุ่ม</div>
+                                            <div class="view-value" id="viewStudentRoom"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 text-center mt-3">
+                                <small class="text-white opacity-25" id="viewStudentLastUpdated"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         ส่วนที่ 6: Modal (อนุมัติเจ้าหน้าที่)
+         ========================================= -->
+    <div class="modal fade" id="adminApprovalModal" tabindex="-1" aria-labelledby="adminApprovalModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="adminApprovalModalLabel">
+                        <i class="bi bi-person-plus-fill me-2 text-warning"></i>คำขอสมัครเจ้าหน้าที่
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ชื่อ-นามสกุล</th>
+                                    <th>ชื่อผู้ใช้งาน</th>
+                                    <th>เบอร์โทรศัพท์</th>
+                                    <th class="text-center">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingAdminTableBody">
+                                <!-- Pending admins will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="adminManagementModal" tabindex="-1" aria-labelledby="adminManagementModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="adminManagementModalLabel">
+                        <i class="bi bi-shield-lock-fill me-2 text-info"></i>รายชื่อเจ้าหน้าที่ในระบบ
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th>ชื่อ-นามสกุล</th>
+                                    <th>ชื่อผู้ใช้งาน</th>
+                                    <th>เบอร์โทรศัพท์</th>
+                                    <th class="text-center">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminTableBody">
+                                <!-- Admins will be rendered here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editAdminModal" tabindex="-1" aria-labelledby="editAdminModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="editAdminModalLabel">แก้ไขข้อมูลเจ้าหน้าที่</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <form id="editAdminForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="editAdminIndex">
+                        <div class="mb-4">
+                            <label for="editAdminName" class="form-label text-muted small ms-2">ชื่อ-นามสกุล</label>
+                            <input type="text" class="form-control" id="editAdminName" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="editAdminPhone" class="form-label text-muted small ms-2">เบอร์โทรศัพท์</label>
+                            <input type="tel" class="form-control" id="editAdminPhone" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="editAdminPassword" class="form-label text-muted small ms-2">รหัสผ่านใหม่
+                                (ปล่อยว่างถ้าไม่ต้องการเปลี่ยน)</label>
+                            <input type="password" class="form-control" id="editAdminPassword">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary px-4">บันทึกการเปลี่ยนแปลง</button>
+                        <button type="button" class="btn btn-outline-secondary px-4"
+                            data-bs-dismiss="modal">ยกเลิก</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="facultyStatsModal" tabindex="-1" aria-labelledby="facultyStatsModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-header bg-transparent">
+                    <h5 class="modal-title fw-bold" id="facultyStatsModalLabel">
+                        <i class="bi bi-pie-chart-fill me-2 text-info"></i>สถิติจำนวนนักศึกษาแยกตามสาขาวิชา
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 mb-4 mb-md-0">
+                            <div
+                                style="max-width: 350px; margin: 0 auto; filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.2));">
+                                <canvas id="facultyChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-white opacity-75 mb-3 border-bottom border-white border-opacity-10 pb-2">
+                                <i class="bi bi-people-fill me-2 text-primary-light"></i>สถิติแยกตามเพศ
+                            </h6>
+                            <div class="d-grid gap-3" id="genderStatsContainer">
+                                <!-- Gender stats will be injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+    <script>
+        // Check login status
+        const currentUser = localStorage.getItem('currentUser');
+        if (!currentUser) {
+            window.location.href = 'index.html';
+        } else {
+            const user = JSON.parse(currentUser);
+            document.getElementById('userDisplay').textContent = `ยินดีต้อนรับ, ${user.name} (${user.role})`;
+        }
+    </script>
+</body>
+
+</html>
